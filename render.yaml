@@ -1,0 +1,27 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# The PostgreSQL database lives on Neon; paste its connection string into
+# DATABASE_URL in the Render dashboard (never commit it).
+services:
+  - type: web
+    name: rooty-team
+    runtime: node
+    plan: free
+    # Migrations run before the build: lesson pages are prerendered and read
+    # the lesson_edits table, so it must exist first.
+    buildCommand: npm ci && npm run db:migrate && npm run build
+    startCommand: npm start
+    healthCheckPath: /uz
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: SITE_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      # The admin account, created or updated on every start.
+      - key: ADMIN_LOGIN
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
