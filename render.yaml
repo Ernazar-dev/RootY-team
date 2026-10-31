@@ -6,6 +6,9 @@ services:
     name: rooty-team
     runtime: node
     plan: free
+    # Same region as the Neon project (AWS eu-central-1, Frankfurt): every
+    # page queries the database, so the two must sit close together.
+    region: frankfurt
     # Migrations run before the build: lesson pages are prerendered and read
     # the lesson_edits table, so it must exist first.
     buildCommand: npm ci && npm run db:migrate && npm run build
@@ -16,7 +19,11 @@ services:
         value: "24"
       - key: SITE_URL
         sync: false
+      # Neon: the pooled string (host has "-pooler") for the app...
       - key: DATABASE_URL
+        sync: false
+      # ...and the direct one for migrations at build time.
+      - key: DATABASE_URL_UNPOOLED
         sync: false
       # The admin account, created or updated on every start.
       - key: ADMIN_LOGIN

@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { sessions, users } from "@/backend/db/schema";
+import { pgOptions } from "@/backend/db/options";
 import { MIN_PASSWORD, hashPassword, isValidLogin, normalizeLogin, verifyPassword } from "./password";
 
 export type AdminEnv =
@@ -41,8 +42,7 @@ export async function syncEnvAdmin() {
   }
   if (config.password.length < 12) console.warn("[admin] ADMIN_PASSWORD is short; 12+ characters is recommended");
 
-  const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
-  const sql = postgres(url, { max: 1, ssl: local ? false : "require", onnotice: () => {} });
+  const sql = postgres(url, { ...pgOptions(url), max: 1 });
   try {
     const db = drizzle(sql);
     const [existing] = await db

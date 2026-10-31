@@ -161,12 +161,22 @@ yozmang — `bg-surface`, `text-muted`, `text-accent` kabi nomlardan foydalaning
 
 ## Deploy: Render + Neon
 
-1. GitHub’ga push qiling.
-2. Render → **New → Blueprint** → repo’ni tanlang (`render.yaml` o‘qiladi).
-3. Muhit o‘zgaruvchilari:
-   - `SITE_URL` — saytning haqiqiy manzili, masalan `https://rooty.onrender.com`
-   - `DATABASE_URL` — Neon’dagi connection string (keyingi bosqichdan kerak)
-4. Deploy.
+Frontend va backend bitta Next.js ilova sifatida Render’da, ma’lumotlar
+bazasi Neon’da turadi.
+
+1. **Neon**: yangi loyiha yarating, region — **AWS Europe Central 1
+   (Frankfurt)** (Render ham shu regionda, `render.yaml` dagi `region`).
+   **Connect** oynasidan ikkita manzilni oling:
+   - *Connection pooling* yoqilgan (hostda `-pooler`) → `DATABASE_URL`
+   - *Connection pooling* o‘chirilgan (direct) → `DATABASE_URL_UNPOOLED`
+2. GitHub’ga push qiling.
+3. Render → **New → Blueprint** → repo’ni tanlang (`render.yaml` o‘qiladi).
+4. Muhit o‘zgaruvchilari:
+   - `SITE_URL` — saytning haqiqiy manzili, masalan `https://rooty-team.onrender.com`
+   - `DATABASE_URL`, `DATABASE_URL_UNPOOLED` — 1-bosqichdagi ikki manzil
+   - `ADMIN_LOGIN`, `ADMIN_PASSWORD`, `ADMIN_NAME` — admin hisob
+5. Deploy. Build paytida migratsiyalar avtomatik bajariladi
+   (`npm run db:migrate`), admin esa server ishga tushganda yaratiladi.
 
 Bepul Render rejasida server 15 daqiqa harakatsizlikdan keyin uxlaydi va
 birinchi so‘rovda ~30–60 soniyada uyg‘onadi.

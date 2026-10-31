@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { users } from "../src/backend/db/schema";
+import { pgOptions } from "../src/backend/db/options";
 import {
   MIN_PASSWORD,
   generatePassword,
@@ -40,8 +41,7 @@ if (!url) {
   console.error("DATABASE_URL is not set.");
   process.exit(1);
 }
-const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
-const sql = postgres(url, { max: 1, ssl: local ? false : "require" });
+const sql = postgres(url, { ...pgOptions(url), max: 1 });
 const db = drizzle(sql);
 
 const password = given ?? generatePassword();

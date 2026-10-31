@@ -4,6 +4,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
+import { pgOptions } from "./options";
 
 const url = process.env.DATABASE_URL;
 
@@ -12,9 +13,7 @@ export const hasDatabase = Boolean(url);
 
 function connect() {
   if (!url) throw new Error("DATABASE_URL is not set. Copy .env.example to .env and fill it in.");
-  // Neon and other hosted databases need TLS; a local server does not.
-  const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
-  return drizzle(postgres(url, { max: 5, ssl: local ? false : "require" }), { schema });
+  return drizzle(postgres(url, { ...pgOptions(url), max: 5 }), { schema });
 }
 
 type Db = ReturnType<typeof connect>;
