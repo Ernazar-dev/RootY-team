@@ -1,11 +1,11 @@
-// The admin account defined in the environment (.env locally, the Render
-// dashboard in production). On every server start the account is created,
-// or brought in line with the environment: still an admin, still active,
-// and with the password from ADMIN_PASSWORD.
+// The admin account defined in the environment (.env locally, the Vercel
+// project settings in production). On every server start (on Vercel: every
+// build) the account is created, or brought in line with the environment:
+// still an admin, still active, and with the password from ADMIN_PASSWORD.
 //
-// Called from src/instrumentation.ts, which runs outside the React server
-// layer, so this module avoids "server-only" imports and opens its own
-// short-lived connection.
+// Called from src/instrumentation.ts and scripts/sync-admin.ts, which run
+// outside the React server layer, so this module avoids "server-only"
+// imports and opens its own short-lived connection.
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";

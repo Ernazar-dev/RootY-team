@@ -13,7 +13,10 @@ export const hasDatabase = Boolean(url);
 
 function connect() {
   if (!url) throw new Error("DATABASE_URL is not set. Copy .env.example to .env and fill it in.");
-  return drizzle(postgres(url, { ...pgOptions(url), max: 5 }), { schema });
+  // On Vercel each function instance gets its own pool: keep it small and
+  // let idle connections go, Neon's pooler does the real pooling.
+  const pool = process.env.VERCEL ? { max: 2, idle_timeout: 20 } : { max: 5 };
+  return drizzle(postgres(url, { ...pgOptions(url), ...pool }), { schema });
 }
 
 type Db = ReturnType<typeof connect>;

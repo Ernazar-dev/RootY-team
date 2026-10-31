@@ -59,8 +59,9 @@ Server har ishga tushganda (`npm run dev`, `npm start`) shu login bilan
 admin yaratiladi; parolni `.env` da o‘zgartirib serverni qayta ishga
 tushirsangiz — yangi parol kuchga kiradi (eski sessiyalar yopiladi).
 Keyin http://localhost:3000/uz/login orqali kiring: admin avtomatik
-http://localhost:3000/admin ga o‘tadi. Render'da xuddi shu uch qiymatni
-dashboard → Environment ga yozing.
+http://localhost:3000/admin ga o‘tadi. Vercel'da xuddi shu uch qiymatni
+Settings → Environment Variables ga yozing (admin har deploy build'ida
+yaratiladi yoki yangilanadi).
 
 | Buyruq                     | Vazifasi                                         |
 | -------------------------- | ------------------------------------------------ |
@@ -159,27 +160,26 @@ yozmang — `bg-surface`, `text-muted`, `text-accent` kabi nomlardan foydalaning
 4. `src/frontend/lessons/index.ts` dagi ro‘yxatga qo‘shing.
 5. `npm test` — barcha tillar to‘ldirilganini tekshiradi.
 
-## Deploy: Render + Neon
+## Deploy: Vercel + Neon
 
-Frontend va backend bitta Next.js ilova sifatida Render’da, ma’lumotlar
-bazasi Neon’da turadi.
+Frontend va backend bitta Next.js ilova sifatida Vercel’da, ma’lumotlar
+bazasi Neon’da turadi. Funksiyalar Frankfurt’da ishlaydi (`vercel.json` →
+`regions: ["fra1"]`), Neon ham shu regionda bo‘lishi kerak.
 
-1. **Neon**: yangi loyiha yarating, region — **AWS Europe Central 1
-   (Frankfurt)** (Render ham shu regionda, `render.yaml` dagi `region`).
+1. **Neon**: region — **AWS Europe Central 1 (Frankfurt)**.
    **Connect** oynasidan ikkita manzilni oling:
    - *Connection pooling* yoqilgan (hostda `-pooler`) → `DATABASE_URL`
    - *Connection pooling* o‘chirilgan (direct) → `DATABASE_URL_UNPOOLED`
 2. GitHub’ga push qiling.
-3. Render → **New → Blueprint** → repo’ni tanlang (`render.yaml` o‘qiladi).
-4. Muhit o‘zgaruvchilari:
-   - `SITE_URL` — saytning haqiqiy manzili, masalan `https://rooty-team.onrender.com`
+3. Vercel → **Add New → Project** → repo’ni import qiling, **Project Name**:
+   `rooty-team` (manzil `https://rooty-team.vercel.app` bo‘ladi).
+4. **Environment Variables** (Production):
+   - `SITE_URL` — saytning haqiqiy manzili, masalan `https://rooty-team.vercel.app`
    - `DATABASE_URL`, `DATABASE_URL_UNPOOLED` — 1-bosqichdagi ikki manzil
    - `ADMIN_LOGIN`, `ADMIN_PASSWORD`, `ADMIN_NAME` — admin hisob
-5. Deploy. Build paytida migratsiyalar avtomatik bajariladi
-   (`npm run db:migrate`), admin esa server ishga tushganda yaratiladi.
-
-Bepul Render rejasida server 15 daqiqa harakatsizlikdan keyin uxlaydi va
-birinchi so‘rovda ~30–60 soniyada uyg‘onadi.
+5. Deploy. Build buyrug‘i `vercel.json` da: migratsiyalar
+   (`npm run db:migrate`), admin (`npm run admin:sync`), keyin `next build`.
+   Admin parolini o‘zgartirsangiz — **Redeploy** qiling.
 
 ## Etika
 

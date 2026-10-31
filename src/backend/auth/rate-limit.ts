@@ -11,8 +11,9 @@ export function isLocked(loginFailures: number, ipFailures: number) {
 }
 
 /**
- * The client address behind a proxy. Render appends the real address to
- * X-Forwarded-For, so the last entry is the one a client cannot forge.
+ * The client address behind a proxy. Vercel overwrites X-Forwarded-For with
+ * the real address (other proxies append it), so the last entry is the one
+ * a client cannot forge.
  */
 export function clientIp(forwardedFor: string | null, realIp: string | null) {
   const last = forwardedFor?.split(",").at(-1)?.trim();
