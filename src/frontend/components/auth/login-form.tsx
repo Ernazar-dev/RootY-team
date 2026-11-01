@@ -1,22 +1,57 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, LoaderCircle, TriangleAlert } from "lucide-react";
 import { login, type LoginState } from "@/backend/auth/actions";
 import type { Locale } from "@/shared/i18n/config";
 import type { Messages } from "@/shared/i18n/messages/uz";
+import { keepValues } from "@/frontend/components/keep-values";
 
 const field =
-  "h-12 w-full rounded-xl border border-border-strong bg-bg px-4 text-base transition-colors outline-none placeholder:text-faint focus:border-accent focus:ring-4 focus:ring-accent/15";
+  "h-12 w-full rounded-xl border border-border-strong bg-bg px-4 text-base transition-colors outline-none placeholder:text-faint focus:border-accent focus:ring-4 focus:ring-accent/15 aria-invalid:border-danger/60";
+
+type Problem = NonNullable<LoginState["error"]> | "missing";
 
 export function LoginForm({ locale, t }: { locale: Locale; t: Messages["auth"] }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(login, {});
   const [visible, setVisible] = useState(false);
+  // Controlled, so nothing typed is lost when the server says no.
+  const [loginName, setLoginName] = useState("");
+  const [password, setPassword] = useState("");
+  const [missing, setMissing] = useState(false);
+  const loginRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const next = useSearchParams().get("next") ?? "";
 
+  // Wrong password: put the cursor back in it, selected, ready to retype.
+  useEffect(() => {
+    if (state.error === "invalid" || state.error === "inactive") {
+      passwordRef.current?.focus();
+      passwordRef.current?.select();
+    }
+  }, [state]);
+
+  const problem: Problem | undefined = missing ? "missing" : pending ? undefined : state.error;
+  const submit = keepValues(action);
+
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form
+      action={action}
+      onSubmit={(event) => {
+        // Catch empty fields here instead of a misleading "wrong password".
+        const empty = !loginName.trim() ? loginRef.current : !password ? passwordRef.current : null;
+        if (empty) {
+          event.preventDefault();
+          setMissing(true);
+          empty.focus();
+          return;
+        }
+        submit(event);
+      }}
+      className="space-y-5"
+      noValidate
+    >
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="next" value={next} />
 
@@ -25,14 +60,20 @@ export function LoginForm({ locale, t }: { locale: Locale; t: Messages["auth"] }
           {t.login}
         </label>
         <input
+          ref={loginRef}
           id="login"
           name="login"
+          value={loginName}
+          onChange={(e) => {
+            setLoginName(e.target.value);
+            setMissing(false);
+          }}
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}
           required
-          defaultValue={state.login}
-          aria-invalid={state.error === "invalid" || undefined}
+          aria-invalid={problem === "invalid" || (problem === "missing" && !loginName.trim()) || undefined}
+          aria-describedby={problem ? "login-error" : undefined}
           className={`${field} font-mono`}
         />
       </div>
@@ -43,12 +84,19 @@ export function LoginForm({ locale, t }: { locale: Locale; t: Messages["auth"] }
         </label>
         <div className="relative">
           <input
+            ref={passwordRef}
             id="password"
             name="password"
             type={visible ? "text" : "password"}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setMissing(false);
+            }}
             autoComplete="current-password"
             required
-            aria-invalid={state.error === "invalid" || undefined}
+            aria-invalid={problem === "invalid" || (problem === "missing" && !password) || undefined}
+            aria-describedby={problem ? "login-error" : undefined}
             className={`${field} pr-12`}
           />
           <button
@@ -63,10 +111,14 @@ export function LoginForm({ locale, t }: { locale: Locale; t: Messages["auth"] }
         </div>
       </div>
 
-      {state.error && (
-        <p role="alert" className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+      {problem && (
+        <p
+          id="login-error"
+          role="alert"
+          className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger"
+        >
           <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
-          {t[state.error]}
+          {t[problem]}
         </p>
       )}
 

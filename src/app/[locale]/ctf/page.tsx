@@ -28,5 +28,5 @@ async function Arena({ locale }: { locale: Locale }) {
   // Signed-in students get their saved solves; anonymous visitors get [].
   const [initial, user] = await Promise.all([listMySolves(), getCurrentUser()]);
   const board = await getLeaderboard(user?.id ?? null);
-  return <CtfArena locale={locale} initial={initial} board={board} />;
+  return <CtfArena locale={locale} initial={initial} board={board} userId={user?.id ?? null} />;
 }

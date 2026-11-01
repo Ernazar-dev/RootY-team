@@ -12,6 +12,7 @@ const kaa = {
     learn: "Sabaqlar",
     labs: "Laboratoriyalar",
     ctf: "CTF",
+    rating: "Reyting",
     login: "Kiriw",
     start: "Baslaw",
     menu: "Menyu",
@@ -151,6 +152,7 @@ const kaa = {
     tooMany: "Urınıwlar júdá kóp. 15 minuttan keyin qayta urınıp kóriń.",
     inactive: "Esabıńız óshirilgen. Oqıtıwshıńızǵa múrájat etiń.",
     unavailable: "Server menen baylanısıw múmkin bolmadı. Birazdan keyin urınıp kóriń.",
+    missing: "Login hám paroldi kiritiń.",
     noAccount: "Esabıńız joq pa? Onı oqıtıwshıńız ashıp beredi.",
     signedInAs: "Siz sistemadasız:",
   },
@@ -160,6 +162,7 @@ const kaa = {
     saving: "Saqlanbaqta…",
     signIn: "Nátiyjeńiz saqlanıwı ushın sistemaǵa kiriń.",
     tracked: "Nátiyjeńiz saqlanbaqta.",
+    failed: "Saqlap bolmadı. Internetti tekserip, qayta basıń.",
   },
   notFound: {
     title: "Bet tabılmadı",

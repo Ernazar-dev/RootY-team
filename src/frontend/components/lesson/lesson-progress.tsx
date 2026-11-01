@@ -17,6 +17,7 @@ type Status = "anonymous" | "started" | "completed";
 export function LessonProgress({ slug, href, locale, t, loginLabel }: { slug: string; /** The lesson page, to come back to after signing in. */ href: string; locale: Locale; t: Messages["progress"]; loginLabel: string }) {
   const [status, setStatus] = useState<Status | null>(null);
   const [pending, startTransition] = useTransition();
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -24,7 +25,8 @@ export function LessonProgress({ slug, href, locale, t, loginLabel }: { slug: st
       .then((r) => r.json() as Promise<SessionInfo>)
       .then(async (info) => {
         if (!info.user) return setStatus("anonymous");
-        if (!info.lesson) await startLesson(slug);
+        // Best effort: a failed "started" mark must not hide the card.
+        if (!info.lesson) await startLesson(slug).catch(() => {});
         setStatus(info.lesson === "completed" ? "completed" : "started");
       })
       .catch(() => {});
@@ -66,16 +68,21 @@ export function LessonProgress({ slug, href, locale, t, loginLabel }: { slug: st
 
   return (
     <div className={`${box} border-border bg-surface`}>
-      <p className="flex items-center gap-3 text-sm text-muted">
-        <span className="pulse-dot size-2 shrink-0 rounded-full bg-accent" />
-        {t.tracked}
+      <p role={failed ? "alert" : undefined} className={`flex items-center gap-3 text-sm ${failed ? "text-danger" : "text-muted"}`}>
+        <span className={`size-2 shrink-0 rounded-full ${failed ? "bg-danger" : "pulse-dot bg-accent"}`} />
+        {failed ? t.failed : t.tracked}
       </p>
       <button
         type="button"
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
-            if ((await completeLesson(slug)).ok) setStatus("completed");
+            setFailed(false);
+            // A failed save must not throw out of the transition (that would
+            // replace the lesson with the error page); say so and allow a retry.
+            const ok = await completeLesson(slug).then((r) => r.ok, () => false);
+            if (ok) setStatus("completed");
+            else setFailed(true);
           })
         }
         className="bg-signal inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold text-white transition-[filter] hover:brightness-110 disabled:opacity-70"

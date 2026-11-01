@@ -11,6 +11,7 @@ const en = {
     learn: "Lessons",
     labs: "Labs",
     ctf: "CTF",
+    rating: "Rating",
     login: "Sign in",
     start: "Start",
     menu: "Menu",
@@ -150,6 +151,7 @@ const en = {
     tooMany: "Too many attempts. Try again in 15 minutes.",
     inactive: "Your account is disabled. Please contact your teacher.",
     unavailable: "Could not reach the server. Please try again shortly.",
+    missing: "Enter your login and password.",
     noAccount: "No account? Your teacher will create one for you.",
     signedInAs: "Signed in as:",
   },
@@ -159,6 +161,7 @@ const en = {
     saving: "Saving…",
     signIn: "Sign in to save your progress.",
     tracked: "Your progress is being saved.",
+    failed: "Could not save. Check your connection and try again.",
   },
   notFound: {
     title: "Page not found",

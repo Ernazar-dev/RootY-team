@@ -36,6 +36,18 @@ const text = {
   checking: { uz: "Tekshirilyapti…", kaa: "Tekserilmekte…", ru: "Проверяем…", en: "Checking…" },
   correct: { uz: "To‘g‘ri! Flag topildi.", kaa: "Durıs! Flag tabıldı.", ru: "Верно! Флаг найден.", en: "Correct! Flag found." },
   wrong: { uz: "Noto‘g‘ri — yana urinib ko‘ring.", kaa: "Qáte — jáne urınıp kóriń.", ru: "Неверно — попробуйте ещё.", en: "Not quite — try again." },
+  tooFast: {
+    uz: "Juda tez urinyapsiz — bir necha soniya kuting va qayta yuboring.",
+    kaa: "Júdá tez urınıp atırsız — bir neshe sekund kútiń hám qayta jiberiń.",
+    ru: "Слишком много попыток — подождите несколько секунд и отправьте снова.",
+    en: "Too many tries — wait a few seconds and submit again.",
+  },
+  failed: {
+    uz: "Server bilan bog‘lanib bo‘lmadi. Flag saqlanib qoldi — qayta yuboring.",
+    kaa: "Server menen baylanısıw múmkin bolmadı. Flag saqlanıp qaldı — qayta jiberiń.",
+    ru: "Не удалось связаться с сервером. Флаг сохранён — отправьте ещё раз.",
+    en: "Could not reach the server. Your flag is still here — submit again.",
+  },
   giveUp: { uz: "Yechimni ko‘rsatish", kaa: "Sheshimdi kórsetiw", ru: "Показать решение", en: "Show the solution" },
   solution: { uz: "Yechim — qadamma-qadam", kaa: "Sheshim — qádemme-qádem", ru: "Решение — по шагам", en: "Solution — step by step" },
   takeaway: { uz: "Xulosa", kaa: "Juwmaq", ru: "Вывод", en: "Takeaway" },
@@ -62,18 +74,22 @@ const text = {
 } satisfies Record<string, Localized>;
 
 // ── Local progress (this browser only) ─────────────────────────────────────
-const storageKey = "rooty-ctf";
+// One key per signed-in student (plus one for visitors): on a shared lab
+// computer, one student's solves must not show up as another's.
+const storageKeyFor = (userId: string | null) => (userId ? `rooty-ctf:${userId}` : "rooty-ctf");
 type State = { solved: string[]; revealed: string[]; hints: Record<string, number> };
 const empty: State = { solved: [], revealed: [], hints: {} };
 
-let memory = JSON.stringify(empty);
+const blank = JSON.stringify(empty);
+// Fallback when storage is blocked, per key.
+const memory = new Map<string, string>();
 const listeners = new Set<() => void>();
 
-function readRaw() {
+function readRaw(key: string) {
   try {
-    return localStorage.getItem(storageKey) ?? memory;
+    return localStorage.getItem(key) ?? memory.get(key) ?? blank;
   } catch {
-    return memory;
+    return memory.get(key) ?? blank;
   }
 }
 
@@ -86,10 +102,11 @@ function subscribe(listener: () => void) {
   };
 }
 
-function save(next: State) {
-  memory = JSON.stringify(next);
+function save(key: string, next: State) {
+  const raw = JSON.stringify(next);
+  memory.set(key, raw);
   try {
-    localStorage.setItem(storageKey, memory);
+    localStorage.setItem(key, raw);
   } catch {
     // Storage blocked: `memory` holds it for this visit.
   }
@@ -109,37 +126,37 @@ function parse(raw: string): State {
   }
 }
 
-function useProgress() {
-  const raw = useSyncExternalStore(subscribe, readRaw, () => memory);
+function useProgress(key: string) {
+  const raw = useSyncExternalStore(subscribe, () => readRaw(key), () => blank);
   const state = useMemo(() => parse(raw), [raw]);
   return {
     state,
     markSolved(id: string) {
-      const s = parse(readRaw());
-      save({ ...s, solved: s.solved.includes(id) ? s.solved : [...s.solved, id] });
+      const s = parse(readRaw(key));
+      save(key, { ...s, solved: s.solved.includes(id) ? s.solved : [...s.solved, id] });
     },
     markRevealed(id: string) {
-      const s = parse(readRaw());
-      save({ ...s, revealed: s.revealed.includes(id) ? s.revealed : [...s.revealed, id] });
+      const s = parse(readRaw(key));
+      save(key, { ...s, revealed: s.revealed.includes(id) ? s.revealed : [...s.revealed, id] });
     },
     markHints(id: string, n: number) {
-      const s = parse(readRaw());
-      save({ ...s, hints: { ...s.hints, [id]: Math.max(s.hints[id] ?? 0, n) } });
+      const s = parse(readRaw(key));
+      save(key, { ...s, hints: { ...s.hints, [id]: Math.max(s.hints[id] ?? 0, n) } });
     },
     reset() {
-      save(empty);
+      save(key, empty);
     },
     /** Merge server-saved solves into local state (union; max hints). */
     hydrate(rows: { challengeId: string; hintsUsed: number }[]) {
       if (rows.length === 0) return;
-      const s = parse(readRaw());
+      const s = parse(readRaw(key));
       const solved = new Set(s.solved);
       const hintsMap = { ...s.hints };
       for (const r of rows) {
         solved.add(r.challengeId);
         hintsMap[r.challengeId] = Math.max(hintsMap[r.challengeId] ?? 0, r.hintsUsed);
       }
-      save({ solved: [...solved], revealed: s.revealed, hints: hintsMap });
+      save(key, { solved: [...solved], revealed: s.revealed, hints: hintsMap });
     },
   };
 }
@@ -149,12 +166,15 @@ export function CtfArena({
   locale,
   initial = [],
   board,
+  userId = null,
 }: {
   locale: Locale;
+  /** The signed-in user, to keep each student's local progress apart. */
+  userId?: string | null;
   initial?: { challengeId: string; hintsUsed: number }[];
   board: LeaderboardData;
 }) {
-  const { state, markSolved, markRevealed, markHints, reset, hydrate } = useProgress();
+  const { state, markSolved, markRevealed, markHints, reset, hydrate } = useProgress(storageKeyFor(userId));
   const router = useRouter();
 
   // Merge the signed-in student's server-saved solves in once on mount.
@@ -179,7 +199,9 @@ export function CtfArena({
     if (typeof window !== "undefined" && window.confirm(text.resetConfirm[locale])) {
       reset();
       // Clear the server copy too (no-op for anonymous), then redraw the board.
-      void resetMySolves().then(() => router.refresh());
+      void resetMySolves()
+        .catch(() => {})
+        .then(() => router.refresh());
     }
   }
 
@@ -290,7 +312,7 @@ function ChallengeCard({
   const [open, setOpen] = useState(false);
   const [hintsShown, setHintsShown] = useState(hintsUsed);
   const [guess, setGuess] = useState("");
-  const [status, setStatus] = useState<"idle" | "checking" | "wrong">("idle");
+  const [status, setStatus] = useState<"idle" | "checking" | "wrong" | "tooFast" | "failed">("idle");
 
   const showSolution = (solved || revealed) && !!challenge.solution?.length;
   const cost = hintCostOf(challenge.points);
@@ -305,12 +327,17 @@ function ChallengeCard({
     event.preventDefault();
     if (!guess.trim()) return;
     setStatus("checking");
-    const { correct } = await checkFlag(challenge.id, guess, hintsShown);
-    if (correct) {
-      setStatus("idle");
-      onSolved();
-    } else {
-      setStatus("wrong");
+    try {
+      const { correct, rateLimited } = await checkFlag(challenge.id, guess, hintsShown);
+      if (correct) {
+        setStatus("idle");
+        onSolved();
+      } else {
+        setStatus(rateLimited ? "tooFast" : "wrong");
+      }
+    } catch {
+      // Network or server error: keep the guess and let them resend.
+      setStatus("failed");
     }
   }
 
@@ -436,9 +463,11 @@ function ChallengeCard({
                 value={guess}
                 onChange={(e) => {
                   setGuess(e.target.value);
-                  if (status === "wrong") setStatus("idle");
+                  if (status !== "checking") setStatus("idle");
                 }}
                 placeholder={text.flagPlaceholder[locale]}
+                aria-invalid={status === "wrong" || undefined}
+                aria-describedby={status !== "idle" && status !== "checking" ? `flag-msg-${challenge.id}` : undefined}
                 autoComplete="off"
                 spellCheck={false}
                 className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-text outline-none focus:border-accent"
@@ -453,7 +482,11 @@ function ChallengeCard({
               </button>
             </form>
           )}
-          {status === "wrong" && !solved && <p className="mt-2 text-sm text-red-500">{text.wrong[locale]}</p>}
+          {(status === "wrong" || status === "tooFast" || status === "failed") && !solved && (
+            <p id={`flag-msg-${challenge.id}`} role="alert" className="mt-2 text-sm text-danger">
+              {text[status][locale]}
+            </p>
+          )}
           {solved && (
             <p className="mt-6 inline-flex items-center gap-2 rounded-lg border border-accent bg-accent-soft/30 px-3 py-2 text-sm text-accent">
               <Check aria-hidden className="size-4" /> {text.correct[locale]}

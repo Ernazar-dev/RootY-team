@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { CheckCircle2, LoaderCircle, Save, TriangleAlert, WandSparkles } from "lucide-react";
 import { createLesson, saveLesson, type ActionState } from "@/backend/services/admin-actions";
 import { parseLesson } from "@/frontend/lessons/schema";
+import { keepValues } from "@/frontend/components/keep-values";
 import { ui } from "./ui";
 
 /**
@@ -43,14 +44,13 @@ export function LessonEditor({
   const serverErrors = !dirty ? (state.errors ?? []) : [];
   const errors = check.ok ? serverErrors : check.errors;
 
+  const submit = (formData: FormData) => {
+    setDirty(false);
+    action(formData);
+  };
+
   return (
-    <form
-      action={(formData) => {
-        setDirty(false);
-        return action(formData);
-      }}
-      className="space-y-4"
-    >
+    <form action={submit} onSubmit={keepValues(submit)} className="space-y-4">
       {slug && <input type="hidden" name="slug" value={slug} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">

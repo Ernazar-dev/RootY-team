@@ -13,6 +13,7 @@ export function SiteHeader({ locale, t }: { locale: Locale; t: Messages }) {
     { href: `/${locale}/learn`, label: t.nav.learn },
     { href: `/${locale}/labs`, label: t.nav.labs },
     { href: `/${locale}/ctf`, label: t.nav.ctf },
+    { href: `/${locale}/rating`, label: t.nav.rating },
   ];
 
   return (

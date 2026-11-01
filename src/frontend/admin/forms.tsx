@@ -11,6 +11,7 @@ import {
   updateStudent,
   type ActionState,
 } from "@/backend/services/admin-actions";
+import { keepValues } from "@/frontend/components/keep-values";
 import { ui } from "./ui";
 
 type GroupOption = { id: number; name: string };
@@ -99,7 +100,7 @@ export function CreateStudentForm({ groups, defaultGroup }: { groups: GroupOptio
   }, [state]);
 
   return (
-    <form ref={form} action={action} className="space-y-4">
+    <form ref={form} action={action} onSubmit={keepValues(action)} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div>
           <label htmlFor="s-name" className={ui.label}>
@@ -147,7 +148,7 @@ export function StudentEditForm({
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(updateStudent, {});
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} onSubmit={keepValues(action)} className="space-y-4">
       <input type="hidden" name="id" value={student.id} />
       <div>
         <label htmlFor="e-name" className={ui.label}>
@@ -178,7 +179,7 @@ export function StudentEditForm({
 export function ResetPasswordForm({ id }: { id: string }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(resetStudentPassword, {});
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} onSubmit={keepValues(action)} className="space-y-4">
       <input type="hidden" name="id" value={id} />
       <p className="text-sm text-muted">Yangi parol yaratiladi va o‘quvchi barcha qurilmalarda tizimdan chiqariladi.</p>
       <button type="submit" disabled={pending} className={`${ui.btn} ${ui.ghost}`}>
@@ -198,7 +199,7 @@ export function CreateGroupForm() {
     if (state.ok) form.current?.reset();
   }, [state]);
   return (
-    <form ref={form} action={action} className="flex flex-wrap items-end gap-3">
+    <form ref={form} action={action} onSubmit={keepValues(action)} className="flex flex-wrap items-end gap-3">
       <div className="min-w-60 flex-1">
         <label htmlFor="g-name" className={ui.label}>
           Yangi guruh
@@ -235,7 +236,7 @@ export function GroupRename({ id, name }: { id: number; name: string }) {
     );
   }
   return (
-    <form action={action} className="flex flex-wrap items-center gap-2">
+    <form action={action} onSubmit={keepValues(action)} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="id" value={id} />
       <input name="name" defaultValue={name} autoFocus required aria-label="Guruh nomi" className={`${ui.input} h-9 w-56`} />
       <button type="submit" disabled={pending} aria-label="Saqlash" className={`${ui.btn} ${ui.primary} h-9 px-3`}>

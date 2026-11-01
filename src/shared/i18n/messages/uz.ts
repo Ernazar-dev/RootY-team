@@ -12,6 +12,7 @@ const uz = {
     learn: "Darslar",
     labs: "Laboratoriyalar",
     ctf: "CTF",
+    rating: "Reyting",
     login: "Kirish",
     start: "Boshlash",
     menu: "Menyu",
@@ -152,6 +153,7 @@ const uz = {
     tooMany: "Urinishlar juda ko‘p. 15 daqiqadan keyin qayta urinib ko‘ring.",
     inactive: "Hisobingiz o‘chirilgan. O‘qituvchingizga murojaat qiling.",
     unavailable: "Server bilan bog‘lanib bo‘lmadi. Birozdan keyin urinib ko‘ring.",
+    missing: "Login va parolni kiriting.",
     noAccount: "Hisobingiz yo‘qmi? Uni o‘qituvchingiz ochib beradi.",
     signedInAs: "Siz tizimdasiz:",
   },
@@ -161,6 +163,7 @@ const uz = {
     saving: "Saqlanmoqda…",
     signIn: "Natijangiz saqlanishi uchun tizimga kiring.",
     tracked: "Natijangiz saqlanmoqda.",
+    failed: "Saqlab bo‘lmadi. Internetni tekshirib, qayta bosing.",
   },
   notFound: {
     title: "Sahifa topilmadi",
